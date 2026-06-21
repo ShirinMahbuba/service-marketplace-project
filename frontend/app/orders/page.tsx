@@ -11,6 +11,8 @@ export default async function OrdersPage() {
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'END_USER') redirect('/login');
+
   const res = await fetch(apiUrl(`/api/transactions?userId=${user.id}`), {
     cache: 'no-store',
     headers: authHeaders(tokenCookie.value),
@@ -67,7 +69,7 @@ export default async function OrdersPage() {
                     <div className="text-right flex-shrink-0">
                       <p className="font-bold text-gray-900">&#2547;{txn.amount.toLocaleString()}</p>
                       <span className={`badge text-xs mt-1 ${
-                        txn.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        txn.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {txn.status}
                       </span>

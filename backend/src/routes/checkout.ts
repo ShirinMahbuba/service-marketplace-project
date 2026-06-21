@@ -16,7 +16,7 @@ router.post('/', async (req: Request, res: Response) => {
         userId,
         serviceId,
         amount,
-        status: 'SUCCESS',
+        status: 'Paid',
         paymentMethod: paymentMethod || 'bKash',
       },
       include: {

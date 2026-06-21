@@ -11,6 +11,8 @@ export default async function VendorDashboard() {
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'VENDOR') redirect('/login');
+
   const res = await fetch(apiUrl(`/api/vendor/profile?userId=${user.id}`), {
     cache: 'no-store',
     headers: authHeaders(tokenCookie.value),
@@ -76,12 +78,12 @@ export default async function VendorDashboard() {
           )}
         </div>
 
-        {/* Recent Orders */}
+        {/* Job History */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Recent Orders Received</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Job History</h2>
           {allTransactions.length === 0 ? (
             <div className="card text-center py-10">
-              <p className="text-gray-500 text-sm">No orders yet.</p>
+              <p className="text-gray-500 text-sm">No jobs yet.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -93,7 +95,9 @@ export default async function VendorDashboard() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="font-bold text-gray-900">&#2547;{txn.amount.toLocaleString()}</p>
-                    <span className="badge bg-green-100 text-green-700 text-xs">{txn.status}</span>
+                    <span className={`badge text-xs ${
+                      txn.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>{txn.status}</span>
                   </div>
                 </div>
               ))}

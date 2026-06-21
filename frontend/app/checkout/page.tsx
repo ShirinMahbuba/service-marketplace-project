@@ -15,6 +15,8 @@ export default async function CheckoutPage({
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'END_USER') redirect('/login');
+
   if (!searchParams.serviceId) redirect('/marketplace');
 
   const res = await fetch(apiUrl(`/api/services/${searchParams.serviceId}`), {

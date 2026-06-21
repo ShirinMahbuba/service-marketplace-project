@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_ROUTES: Record<string, string[]> = {
+type Role = 'ADMIN' | 'VENDOR' | 'END_USER';
+
+const PROTECTED_ROUTES: Record<string, Role[]> = {
   '/admin': ['ADMIN'],
   '/vendor': ['VENDOR'],
   '/marketplace': ['END_USER', 'ADMIN'],
@@ -9,11 +11,22 @@ const PROTECTED_ROUTES: Record<string, string[]> = {
   '/orders': ['END_USER'],
 };
 
+const ROLE_HOME: Record<Role, string> = {
+  ADMIN: '/admin/dashboard',
+  VENDOR: '/vendor/dashboard',
+  END_USER: '/marketplace',
+};
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow login page and API routes
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+  // Allow login page, static assets, and public API routes
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/_next') ||
+    pathname === '/favicon.ico'
+  ) {
     return NextResponse.next();
   }
 
@@ -23,26 +36,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  let user: { role: string } | null = null;
+  let user: { role: Role } | null = null;
   try {
     user = JSON.parse(decodeURIComponent(sessionCookie.value));
   } catch {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Check role-based access
+  if (!user || !user.role) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Explicit role-based route guard
   for (const [route, allowedRoles] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname.startsWith(route)) {
-      if (!user || !allowedRoles.includes(user.role)) {
-        // Redirect to their proper home
-        const roleRedirects: Record<string, string> = {
-          ADMIN: '/admin/dashboard',
-          VENDOR: '/vendor/dashboard',
-          END_USER: '/marketplace',
-        };
-        const redirect = roleRedirects[user?.role || ''] || '/login';
-        return NextResponse.redirect(new URL(redirect, request.url));
+      if (!allowedRoles.includes(user.role)) {
+        const home = ROLE_HOME[user.role] || '/login';
+        return NextResponse.redirect(new URL(home, request.url));
       }
+      break;
     }
   }
 

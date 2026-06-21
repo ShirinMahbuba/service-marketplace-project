@@ -11,6 +11,8 @@ export default async function MarketplacePage() {
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'END_USER' && user.role !== 'ADMIN') redirect('/login');
+
   const res = await fetch(apiUrl('/api/services'), {
     cache: 'no-store',
     headers: authHeaders(tokenCookie.value),

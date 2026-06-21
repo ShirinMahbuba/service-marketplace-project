@@ -17,6 +17,8 @@ export default async function AdminUsersPage() {
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'ADMIN') redirect('/login');
+
   const res = await fetch(apiUrl('/api/admin/users'), {
     cache: 'no-store',
     headers: authHeaders(tokenCookie.value),

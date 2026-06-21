@@ -11,6 +11,8 @@ export default async function VendorServicesPage() {
   if (!sessionCookie || !tokenCookie) redirect('/login');
   const user = JSON.parse(decodeURIComponent(sessionCookie.value));
 
+  if (user.role !== 'VENDOR') redirect('/login');
+
   const res = await fetch(apiUrl(`/api/vendor/services-list?userId=${user.id}`), {
     cache: 'no-store',
     headers: authHeaders(tokenCookie.value),
