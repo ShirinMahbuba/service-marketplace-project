@@ -1,0 +1,12 @@
+{
+  "name": "service-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "setup": "cd backend && npm run setup && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build"
+  }
+}
