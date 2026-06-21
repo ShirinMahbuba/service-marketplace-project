@@ -8,6 +8,7 @@ const DEMO_SHORTCUTS = [
   {
     label: 'Admin User',
     email: 'admin@marketplace.com',
+    password: 'admin123',
     role: 'ADMIN',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,6 +22,7 @@ const DEMO_SHORTCUTS = [
   {
     label: 'Vendor Profile',
     email: 'rahim@vendor.com',
+    password: 'vendor123',
     role: 'VENDOR',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,6 +36,7 @@ const DEMO_SHORTCUTS = [
   {
     label: 'End-User Profile',
     email: 'fatema@user.com',
+    password: 'user123',
     role: 'END_USER',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,13 +63,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
-  const doLogin = async (loginEmail: string) => {
+  const doLogin = async (loginEmail: string, loginPassword?: string, isDemoLogin?: boolean) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: loginEmail }),
+      body: JSON.stringify({ email: loginEmail, password: loginPassword, demoLogin: isDemoLogin }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Login failed.' }));
+      throw new Error(err.error);
+    }
     const data = await res.json();
     localStorage.setItem('token', data.token);
     document.cookie = `auth_token=${data.token}; path=/; max-age=86400; samesite=lax`;
@@ -76,10 +82,10 @@ export default function LoginPage() {
   const handleDemoLogin = async (shortcut: typeof DEMO_SHORTCUTS[0]) => {
     setLoading(shortcut.role);
     setError('');
-    const data = await doLogin(shortcut.email);
-    if (data) {
-      router.push(ROLE_REDIRECTS[shortcut.role]);
-    } else {
+    try {
+      const data = await doLogin(shortcut.email, undefined, true);
+      router.push(ROLE_REDIRECTS[data.user.role]);
+    } catch {
       setError('Login failed. Please try again.');
       setLoading(null);
     }
@@ -88,13 +94,14 @@ export default function LoginPage() {
   const handleCredentialLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) { setError('Please enter your email.'); return; }
+    if (!password) { setError('Please enter your password.'); return; }
     setFormLoading(true);
     setError('');
-    const data = await doLogin(email);
-    if (data) {
+    try {
+      const data = await doLogin(email, password);
       router.push(ROLE_REDIRECTS[data.user.role] || '/marketplace');
-    } else {
-      setError('Invalid email or password. Try a demo account or check your credentials.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid email or password.');
       setFormLoading(false);
     }
   };
@@ -151,7 +158,7 @@ export default function LoginPage() {
                     <div className="flex-1 text-left">
                       <p className="text-white font-medium text-sm">{s.label}</p>
                       <p className="text-slate-500 text-xs mt-0.5">{s.desc}</p>
-                      <p className="text-slate-600 text-[11px] mt-0.5 font-mono">{s.email}</p>
+                      <p className="text-slate-600 text-[11px] mt-0.5 font-mono">{s.email} / {s.password}</p>
                     </div>
                     <svg className="w-4 h-4 text-slate-600 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

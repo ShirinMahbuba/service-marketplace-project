@@ -6,19 +6,29 @@ import { prisma } from '../lib/prisma';
 const router = Router();
 
 router.post('/login', async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const { email, password, demoLogin } = req.body;
 
   if (!email) {
     return res.status(400).json({ error: 'Email is required.' });
   }
 
-  // Check mock users first, then database
-  let user = MOCK_USERS.find((u) => u.email === email);
+  // Check mock users first
+  const mockUser = MOCK_USERS.find((u) => u.email === email);
 
-  if (!user) {
+  let user: { id: string; name: string; email: string; role: 'ADMIN' | 'VENDOR' | 'END_USER' } | null = null;
+
+  if (mockUser) {
+    // For demo shortcut logins (demoLogin flag), skip password check
+    // For credential form logins, validate password
+    if (!demoLogin && password !== mockUser.password) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+    user = { id: mockUser.id, name: mockUser.name, email: mockUser.email, role: mockUser.role };
+  } else {
+    // Check database users
     const dbUser = await prisma.user.findUnique({ where: { email } });
     if (!dbUser) {
-      return res.status(401).json({ error: 'Invalid credentials.' });
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
     user = {
       id: dbUser.id,
